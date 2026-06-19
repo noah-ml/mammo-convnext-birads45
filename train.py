@@ -52,7 +52,7 @@ from torchvision.models import (
 from tqdm import tqdm
 
 
-# ── Worker-local tar cache ────────────────────────────────────────────────────
+# Worker-local tar cache
 # Module-level dict is process-local: each DataLoader worker keeps its own
 # open handles, so we never re-open the same shard on every __getitem__.
 
@@ -65,7 +65,7 @@ def _get_worker_tar(path: str) -> tarfile.TarFile:
     return _WORKER_TAR_CACHE[path]
 
 
-# ── Dataset ───────────────────────────────────────────────────────────────────
+# Dataset
 
 class TarShardDataset(Dataset):
     """
@@ -140,7 +140,7 @@ class TarShardDataset(Dataset):
         return tensor, torch.tensor(float(label), dtype=torch.float32), idx
 
 
-# ── Model ─────────────────────────────────────────────────────────────────────
+# Model
 
 ARCH_HEAD_NAME = {
     "resnet18":        "fc",
@@ -177,7 +177,7 @@ def build_model(arch: str, device: torch.device, dropout: float = 0.0) -> nn.Mod
     return model.to(device)
 
 
-# ── Loss ──────────────────────────────────────────────────────────────────────
+# Loss
 
 def build_criterion(
     train_labels: list[int], device: torch.device, oversample_rate: float = 0.0
@@ -211,7 +211,7 @@ def apply_label_smoothing(labels: torch.Tensor, smoothing: float) -> torch.Tenso
     return labels * (1.0 - smoothing) + smoothing * 0.5
 
 
-# ── Optimizers ────────────────────────────────────────────────────────────────
+# Optimizers
 
 def build_phase1_optimizer(model: nn.Module, arch: str, lr_head: float) -> torch.optim.Optimizer:
     head_name = ARCH_HEAD_NAME[arch]
@@ -231,7 +231,7 @@ def build_phase2_optimizer(
     ])
 
 
-# ── LR scheduler ─────────────────────────────────────────────────────────────
+# LR scheduler
 
 def build_phase2_scheduler(
     optimizer: torch.optim.Optimizer,
@@ -257,7 +257,7 @@ def build_phase2_scheduler(
     )
 
 
-# ── BatchNorm helpers ─────────────────────────────────────────────────────────
+# BatchNorm helpers
 
 def freeze_bn(model: nn.Module) -> None:
     for m in model.modules():
@@ -265,7 +265,7 @@ def freeze_bn(model: nn.Module) -> None:
             m.eval()
 
 
-# ── Calibration ───────────────────────────────────────────────────────────────
+# Calibration
 
 def compute_ece(probs: np.ndarray, labels: np.ndarray, n_bins: int = 10) -> float:
     bins = np.linspace(0.0, 1.0, n_bins + 1)
@@ -287,7 +287,7 @@ def compute_brier(probs: np.ndarray, labels: np.ndarray) -> float:
     return float(np.mean((probs - labels) ** 2))
 
 
-# ── Train / validate ──────────────────────────────────────────────────────────
+# Train / validate
 
 def train_epoch(
     model: nn.Module,
@@ -358,7 +358,7 @@ def validate_epoch(
     return total_loss / n, val_auc, compute_ece(y_prob, y_true)
 
 
-# ── Test evaluation ───────────────────────────────────────────────────────────
+# Test evaluation
 
 def find_youden_threshold(y_true: np.ndarray, y_prob: np.ndarray) -> float:
     fpr, tpr, thresholds = roc_curve(y_true, y_prob)
@@ -424,7 +424,7 @@ def evaluate_test(
     return metrics, y_true, y_prob, y_prob_tta
 
 
-# ── Checkpoint management ─────────────────────────────────────────────────────
+# Checkpoint management
 
 class TopKCheckpoints:
     def __init__(self, output_dir: Path, k: int = 3) -> None:
@@ -456,7 +456,7 @@ class TopKCheckpoints:
         return self._ckpts[0][0] if self._ckpts else -1.0
 
 
-# ── Plots ─────────────────────────────────────────────────────────────────────
+# Plots
 
 def save_training_curves(log_rows: list[dict], freeze_epochs: int, output_dir: Path) -> None:
     if not log_rows:
@@ -530,7 +530,7 @@ def save_reliability_diagram(
     wandb.log({"charts/reliability_diagram": wandb.Image(str(save_path))})
 
 
-# ── Stratified analysis ───────────────────────────────────────────────────────
+# Stratified analysis
 
 def stratified_analysis(
     pred_df: pd.DataFrame, group_col: str, y_true: np.ndarray, y_prob: np.ndarray,
@@ -553,7 +553,7 @@ def stratified_analysis(
     return lines
 
 
-# ── Reproducibility ───────────────────────────────────────────────────────────
+# Reproducibility
 
 def set_seeds(seed: int) -> None:
     random.seed(seed)
@@ -564,7 +564,7 @@ def set_seeds(seed: int) -> None:
     torch.backends.cudnn.benchmark = False
 
 
-# ── CLI ───────────────────────────────────────────────────────────────────────
+# CLI
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
@@ -613,7 +613,7 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# Main
 
 def main() -> None:
     args = parse_args()
@@ -631,7 +631,7 @@ def main() -> None:
         mode="offline" if args.wandb_offline else "online",
     )
 
-    # ── Datasets ─────────────────────────────────────────────────────────────
+    # Datasets
     ds_train = TarShardDataset(args.data_dir, split="train", augment=True)
     ds_val   = TarShardDataset(args.data_dir, split="val",   augment=False)
     ds_test  = TarShardDataset(args.data_dir, split="test",  augment=False)
@@ -666,7 +666,7 @@ def main() -> None:
     loader_val  = DataLoader(ds_val,  batch_size=args.batch_size, shuffle=False, **loader_kw)
     loader_test = DataLoader(ds_test, batch_size=args.batch_size, shuffle=False, **loader_kw)
 
-    # ── Model + loss ─────────────────────────────────────────────────────────
+    # Model + loss
     model     = build_model(args.arch, device, dropout=args.dropout)
     criterion = build_criterion(ds_train.get_labels(), device, oversample_rate=args.oversample_rate)
 
@@ -679,7 +679,7 @@ def main() -> None:
 
     scaler = torch.cuda.amp.GradScaler()
 
-    # ── Phase 1: freeze backbone, train head only ─────────────────────────────
+    # Phase 1: freeze backbone, train head only
     head_name = ARCH_HEAD_NAME[args.arch]
     for name, param in model.named_parameters():
         if head_name not in name:
@@ -689,7 +689,7 @@ def main() -> None:
     print(f"\nPhase 1: head-only warmup for {args.freeze_epochs} epochs "
           f"(lr_head={args.lr_head})")
 
-    # ── Training state ────────────────────────────────────────────────────────
+    # Training state
     topk_ckpts        = TopKCheckpoints(args.output_dir, k=3)
     patience_cnt      = 0
     log_rows:    list[dict] = []
@@ -786,7 +786,7 @@ def main() -> None:
     save_training_curves(log_rows, args.freeze_epochs, args.output_dir)
     pd.DataFrame(log_rows).to_csv(args.output_dir / "training_log.csv", index=False)
 
-    # ── Test evaluation ───────────────────────────────────────────────────────
+    # Test evaluation
     print(f"\nLoading best checkpoint: {topk_ckpts.best_path}")
     ckpt   = torch.load(topk_ckpts.best_path, map_location=device)
     target = model._orig_mod if hasattr(model, "_orig_mod") else model
@@ -815,7 +815,7 @@ def main() -> None:
         args.output_dir / "reliability_diagram.png",
     )
 
-    # ── Summary ───────────────────────────────────────────────────────────────
+    # Summary
     lines = [
         "=" * 60,
         "  TEST SET RESULTS",

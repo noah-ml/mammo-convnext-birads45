@@ -2,7 +2,7 @@
 """
 Author: Noah Lorch
 
--> ConvNeXt Classifier for Mammography. IMAGE INPUT SIZE = 1024x384. 
+-> ConvNeXt Classifier for Mammography. 
 
 Reading from TAR shards! (npy files)
 

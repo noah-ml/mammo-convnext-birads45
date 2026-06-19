@@ -6,7 +6,7 @@ Binary classifier for suspicious mammography findings (BI-RADS 4+5 vs. 1-3) trai
 
 - **Architecture:** ConvNeXt-Tiny (ImageNet pretrained, fine-tuned). Code also works with EfficientNet and ResNet (--arch flag).
 - **Task:** Binary classification: BI-RADS 4 or 5 (positive) vs. BI-RADS 1-3 (negative)
-- **Input:** 1024×384 px grayscale mammograms (replicated to 3 channels), normalized to [0, 1]
+- **Input:** 1024×384 px grayscale mammograms (replicated to 3 channels), normalized to [0, 1]. The script is resolution-agnostic — it works with any image size baked into the shards (e.g. 512×512, 768×768). All three architectures use global average pooling before the FC head. Adjust `--batch-size` for your VRAM.
 - **Training:** Two-phase schedule: head-only warmup (5 epochs) → full fine-tune with cosine LR decay
 - **Imbalance handling:** WeightedRandomSampler (target positive rate 20%) + BCEWithLogitsLoss pos_weight
 

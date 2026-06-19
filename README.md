@@ -64,8 +64,8 @@ Key arguments:
 | `--dropout` | 0.3 | Dropout before FC head |
 | `--oversample-rate` | 0.20 | Target positive rate for oversampling |
 | `--patience` | 15 | Early stopping patience (val AUC) |
-| `--no-tta` | — | Disable test-time augmentation |
-| `--wandb-offline` | — | Log W&B offline, sync later with `wandb sync` |
+| `--no-tta` | - | Disable test-time augmentation |
+| `--wandb-offline` | - | Log W&B offline, sync later with `wandb sync` |
 
 ## Augmentation
 

@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
 """
-train.py
-========
-Multi-architecture binary classifier for VinDr-Mammo, reading from TAR shards.
+Author: Noah Lorch
 
-Supports ResNet-18, EfficientNet-B4, and ConvNeXt-Tiny (--arch flag).
+-> ConvNeXt Classifier for Mammography. IMAGE INPUT SIZE = 1024x384. 
+
+Reading from TAR shards! (npy files)
+
+Supports ResNet-18, EfficientNet-B4, and ConvNeXt-Tiny (--arch flag). 
+ConvNeXt gets the best performance ;) (on VinDr-Mammo at least).
+
 Training uses a two-phase schedule: head-only warmup (phase 1) followed by
 full fine-tuning with cosine LR decay (phase 2). WeightedRandomSampler
 handles class imbalance, with pos_weight derived from the effective batch
-ratio after oversampling to avoid double-counting.
+ratio after oversampling (avoids double counting).
 
-Usage
+Usage:
 -----
     python train.py \\
-        --data-dir /path/to/vindr_tar_shards \\
+        --data-dir /path/to/tar_shards \\
         --output-dir ./output \\
         --arch convnext_tiny \\
-        --wandb-project mammo-thesis \\
+        --wandb-project your-project-name \\
         --batch-size 48 \\
         --epochs 50
 """
@@ -68,15 +72,11 @@ def _get_worker_tar(path: str) -> tarfile.TarFile:
 # Dataset
 
 class TarShardDataset(Dataset):
-    """
-    Reads float32 (H×W) images and labels from TAR shards.
+  """
+    reads float32 (H×W) images and labels from TAR shards.
 
-    Index is built from shard_manifest.csv at init time — no tar files are
-    opened until the first __getitem__ in each worker process. Labels,
-    manufacturer, and density come from the manifest and are kept in self.df
-    for downstream stratified analysis.
 
-    Expected directory layout (output of dicom_to_tar_shards.py):
+    Expected directory layout (output of preprocessing pipeline for DICOM images):
         data_dir/
           train/*.tar   val/*.tar   test/*.tar
           metadata/shard_manifest.csv
@@ -97,7 +97,7 @@ class TarShardDataset(Dataset):
                 f"Available splits: {df['split'].unique().tolist()}"
             )
 
-        # (shard_full_path, image_id, label) — resolved once, reused in workers
+        # (shard_full_path, image_id, label): resolved once, reused in workers
         self._index: list[tuple[str, str, int]] = [
             (
                 str(self._shard_dir / str(row["shard"])),
@@ -108,7 +108,7 @@ class TarShardDataset(Dataset):
         ]
         self._labels: list[int] = [t[2] for t in self._index]
 
-        # Augmentations: mammo-net style
+        # Augmentations: mammo-net style. Inspired by Kheiron Mammo-Net. Attention: ColorJitter applies contrast changes. If you want to test your model on contrast robustness, remove ColorJitter (or keep it in your mind, at least). 
         self._photometric = T.RandomApply(
             [T.ColorJitter(brightness=0.2, contrast=0.2)], p=0.5
         )

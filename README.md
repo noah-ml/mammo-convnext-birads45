@@ -41,16 +41,21 @@ data-dir/
 
 ## Usage
 
+**Install dependencies:**
 ```bash
 pip install -r requirements.txt
+```
 
+**Train:**
+```bash
 python train.py \
     --data-dir /path/to/vindr_tar_shards \
     --output-dir ./output \
     --arch convnext_tiny \
     --batch-size 48 \
     --epochs 50 \
-    --wandb-project your-project
+    --no-tta \
+    --wandb-project <your-project>
 ```
 
 Key arguments:

@@ -15,6 +15,7 @@ Binary classifier for suspicious mammography findings (BI-RADS 4+5 vs. 1-3) trai
 | Metric | Value |
 |---|---|
 | AUC-ROC | **0.8385** |
+| Average Precision | 0.501 |
 | Sensitivity | 0.591 |
 | Specificity | 0.922 |
 | F1 | 0.382 |

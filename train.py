@@ -185,8 +185,6 @@ def build_criterion(
     n_pos = sum(train_labels)
     n_neg = len(train_labels) - n_pos
     if oversample_rate > 0.0:
-        # pos_weight reflects effective batch ratio after oversampling, not raw dataset ratio,
-        # to avoid double-counting the positive weight.
         pos_weight_val = (1.0 - oversample_rate) / oversample_rate
     else:
         pos_weight_val = n_neg / max(n_pos, 1)

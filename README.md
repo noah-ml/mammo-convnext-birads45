@@ -1,13 +1,13 @@
 # ConvNeXt-Tiny BI-RADS 4+5 Classifier for VinDr-Mammo
 
-Binary classifier for suspicious mammography findings (BI-RADS 4+5 vs. 1–3) trained on the [VinDr-Mammo](https://vindr.ai/datasets/mammo) dataset.
+Binary classifier for suspicious mammography findings (BI-RADS 4+5 vs. 1-3) trained on the [VinDr-Mammo](https://vindr.ai/datasets/mammo) dataset.
 
 ## Model
 
 - **Architecture:** ConvNeXt-Tiny (ImageNet pretrained, fine-tuned)
-- **Task:** Binary classification — BI-RADS 4 or 5 (positive) vs. BI-RADS 1–3 (negative)
+- **Task:** Binary classification: BI-RADS 4 or 5 (positive) vs. BI-RADS 1–3 (negative)
 - **Input:** 1024×384 px grayscale mammograms (replicated to 3 channels), normalized to [0, 1]
-- **Training:** Two-phase schedule — head-only warmup (5 epochs) → full fine-tune with cosine LR decay
+- **Training:** Two-phase schedule: head-only warmup (5 epochs) → full fine-tune with cosine LR decay
 - **Imbalance handling:** WeightedRandomSampler (target positive rate 20%) + BCEWithLogitsLoss pos_weight
 
 ## Results (VinDr-Mammo official test split)
@@ -25,7 +25,7 @@ Test set: 4000 images, prevalence 4.95% (198 positives).
 
 ## Dataset
 
-Download VinDr-Mammo from [PhysioNet](https://physionet.org/content/vindr-mammo/1.0.0/). The training script reads from TAR shards — DICOM images must be preprocessed into this format first (not included in this repo).
+Download VinDr-Mammo from [PhysioNet](https://physionet.org/content/vindr-mammo/1.0.0/). The training script reads from TAR shards: DICOM images must be preprocessed into this format first (not included in this repo).
 
 Expected directory layout:
 
